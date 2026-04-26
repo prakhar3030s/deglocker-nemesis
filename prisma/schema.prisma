@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String
+  email         String        @unique
+  password      String
+  role          Role          @default(STUDENT)
+  orgName       String?       // for issuers: university name
+  createdAt     DateTime      @default(now())
+  certificates  Certificate[] @relation("IssuedBy")
+  received      Certificate[] @relation("IssuedTo")
+}
+
+enum Role {
+  ISSUER
+  STUDENT
+  EMPLOYER
+}
+
+model Certificate {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  fileUrl        String
+  fileHash       String   // SHA-256 hash of file — simulates blockchain fingerprint
+  issuedById     String
+  issuedToId     String
+  issuedBy       User     @relation("IssuedBy", fields: [issuedById], references: [id])
+  issuedTo       User     @relation("IssuedTo", fields: [issuedToId], references: [id])
+  issuedAt       DateTime @default(now())
+  verified       Boolean  @default(true)
+  revoked        Boolean  @default(false)
+  blockchainTxId String?  // simulate a fake tx hash for display
+}
